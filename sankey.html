@@ -7,111 +7,107 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ── design tokens lifted from Create_Identical_Design / App.tsx ── */
   :root{
-    --bg:#15181b; --panel:#2a2f35; --panel-edge:#363c43;
-    --txt:#eef1f4; --dim:#8b939c; --mut:#5c646c;
-    --blue:#1f74ff; --blue-lt:#5fa0ff;
-    --tab:#2d3238; --tab-edge:#3c424a; --accent:#1f74ff;
-    --loss:#f0992e; --ok:#27c46f; --bad:#ff5a5f;
+    --bg:#0f1120; --topbar:#141628; --topbar-edge:#1e2248;
+    --node-bg:rgba(12,17,38,0.94); --node-stroke:#252d56;
+    --t-main:#b2bcd4; --t-sub:#60708e; --t-val:#82a4dd;
+    --bar-bg:rgba(20,30,65,0.7); --bar-fill:#1b5ec4;
+    --tab-on:#cdd4ee; --tab-off:#55607a; --tab-line:#3a72e0;
+    --sep:#1e2448; --accent:#3a72e0;
+    --ok:#5fd39a; --warn:#e0a44b; --bad:#e06b6b;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--t-main);
             font-family:Inter,system-ui,sans-serif;overflow:hidden;}
   .mono{font-family:'IBM Plex Mono',monospace;}
   #app{display:flex;flex-direction:column;width:100vw;height:100vh;}
 
-  /* TOP BAR */
-  #topbar{display:flex;gap:2px;height:46px;padding:6px 8px;flex-shrink:0;}
-  .tab{display:flex;align-items:center;padding:0 18px;background:var(--tab);
-       border:1px solid var(--tab-edge);border-radius:3px;cursor:pointer;
-       font-size:15px;font-weight:600;color:var(--dim);user-select:none;min-width:150px;transition:.13s;}
-  .tab .chev{margin-left:auto;padding-left:14px;color:var(--mut);font-size:11px;}
-  .tab:hover{background:#343a41;color:var(--txt);}
-  .tab.active{color:#fff;border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
-  .tab.active .chev{color:#fff;}
-  .spacer{flex:1;}
-  .src-tab{min-width:250px;color:var(--dim);} .src-tab b{color:var(--txt);}
-  .navbtn{display:flex;align-items:center;justify-content:center;width:50px;background:var(--tab);
-          border:1px solid var(--tab-edge);border-radius:3px;cursor:pointer;color:var(--dim);font-size:15px;}
-  .navbtn:hover{background:#343a41;color:#fff;}
+  /* TOP BAR — underline tabs (App.tsx style) */
+  #topbar{display:flex;align-items:center;height:42px;padding:0 10px;gap:2px;flex-shrink:0;
+          background:var(--topbar);border-bottom:1px solid var(--topbar-edge);}
+  .tab{padding:0 14px;height:42px;background:none;border:none;border-bottom:2px solid transparent;
+       color:var(--tab-off);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;
+       letter-spacing:.01em;transition:.13s;}
+  .tab:hover{color:#8893b4;}
+  .tab.active{color:var(--tab-on);border-bottom-color:var(--tab-line);}
+  .src-label{margin-left:auto;font-size:12px;color:#404868;letter-spacing:.02em;}
+  .src-label b{color:#6f7aa0;font-weight:600;}
+  .wbtns{display:flex;gap:4px;margin-left:14px;}
+  .wbtn{background:#1c2040;border:1px solid #252d50;color:#5568a0;width:24px;height:21px;border-radius:3px;
+        cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;}
+  .wbtn:hover{color:#aab6e0;border-color:#3a72e0;}
 
   /* STAGE */
   #stage{flex:1;position:relative;min-height:0;}
-  svg{position:absolute;inset:0;width:100%;height:100%;}
+  svg{position:absolute;inset:0;width:100%;height:100%;display:block;}
   .link{transition:opacity .25s;}
-  .link.dim{opacity:.13;}
-  .node-rect{fill:var(--panel);stroke:var(--panel-edge);stroke-width:1;}
-  .node{transition:opacity .25s;} .node.dim{opacity:.3;}
-  .n-title{fill:var(--dim);font-size:14px;font-weight:600;}
-  .n-code{fill:var(--mut);font-size:11px;font-weight:600;}
-  .n-val{fill:var(--txt);font-size:26px;font-weight:700;}
-  .n-unit{fill:var(--mut);font-size:13px;}
-  .n-sub{fill:var(--dim);font-size:12px;}
-  .leaf-name{fill:var(--dim);font-size:15px;font-weight:600;}
-  .leaf-val{fill:var(--txt);font-size:26px;font-weight:700;}
-  .leaf-unit{fill:var(--mut);font-size:13px;}
-  .gtrack{fill:#1d2228;stroke:#333a42;stroke-width:1;}
+  .link.dim{opacity:.1;}
+  .node{transition:opacity .25s;} .node.dim{opacity:.32;}
+  .n-rect{fill:var(--node-bg);stroke:var(--node-stroke);stroke-width:1;}
+  .n-name{fill:var(--t-main);font-size:12px;font-weight:500;}
+  .n-val{fill:var(--t-val);font-size:13px;font-weight:600;}
+  .n-sub{fill:var(--t-sub);font-size:9.5px;}
+  .ndiv{stroke:var(--node-stroke);stroke-width:.75;}
+  .leaf{transition:opacity .25s;} .leaf.dim{opacity:.3;}
+  .leaf-name{fill:var(--t-main);font-size:13px;}
+  .leaf-val{fill:var(--t-sub);font-size:13px;}
+  .grp-cap{fill:var(--t-sub);font-size:10px;font-weight:600;letter-spacing:.16em;}
   .gfill{transition:width .8s cubic-bezier(.4,0,.2,1);}
-  .ghandle{stroke:#cfe0ff;stroke-width:2;transition:x .8s cubic-bezier(.4,0,.2,1);}
-  .leaf.dim{opacity:.3;}
-  #legend{position:absolute;top:14px;right:20px;display:flex;gap:16px;background:rgba(16,20,24,.6);
-          border:1px solid #2a2f35;border-radius:4px;padding:7px 13px;font-size:12px;color:var(--dim);z-index:5;}
-  #legend .lg{display:flex;align-items:center;gap:7px;}
-  #legend .sw{width:13px;height:8px;border-radius:2px;}
-  #title-badge{position:absolute;top:12px;left:20px;z-index:5;}
-  #title-badge .t1{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:700;text-transform:uppercase;}
-  #title-badge .t2{font-size:19px;font-weight:700;color:#fff;margin-top:2px;}
-  #title-badge .t3{font-size:12px;color:var(--dim);}
-  .tooltip{position:absolute;pointer-events:none;background:#10141a;border:1px solid #2f353c;border-radius:5px;
-           padding:10px 12px;font-size:12px;color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;
+  #title-badge{position:absolute;top:12px;left:18px;z-index:5;}
+  #title-badge .t1{font-size:10px;letter-spacing:.2em;color:var(--accent);font-weight:700;text-transform:uppercase;}
+  #title-badge .t2{font-size:18px;font-weight:700;color:#dfe5f5;margin-top:2px;}
+  #title-badge .t3{font-size:11px;color:var(--t-sub);}
+  .tooltip{position:absolute;pointer-events:none;background:#0b0e1c;border:1px solid #252d56;border-radius:5px;
+           padding:10px 12px;font-size:12px;color:var(--t-main);box-shadow:0 8px 24px rgba(0,0,0,.6);opacity:0;
            transition:opacity .12s;max-width:270px;z-index:20;}
-  .tooltip b{color:#fff;}
-  .tooltip .row{display:flex;justify-content:space-between;gap:18px;margin-top:3px;color:var(--dim);}
-  .tooltip .row span:last-child{color:var(--txt);}
+  .tooltip b{color:#dfe5f5;}
+  .tooltip .row{display:flex;justify-content:space-between;gap:18px;margin-top:3px;color:var(--t-sub);}
+  .tooltip .row span:last-child{color:var(--t-main);}
 
-  /* BOTTOM BAR */
-  #botbar{display:flex;height:62px;flex-shrink:0;border-top:1px solid #23282e;background:#13161a;}
-  .b-logo{display:flex;align-items:center;justify-content:center;width:60px;font-weight:800;color:var(--accent);
-          font-size:20px;border-right:1px solid #23282e;}
-  .b-clock{display:flex;flex-direction:column;justify-content:center;padding:0 18px;border-right:1px solid #23282e;min-width:118px;}
-  .b-clock .t{font-size:20px;font-weight:600;} .b-clock .d{font-size:11px;color:var(--mut);}
-  .b-cell{display:flex;align-items:center;padding:0 16px;border-right:1px solid #23282e;color:var(--dim);font-size:13px;}
-  .b-cell .v{color:var(--txt);font-weight:600;}
+  /* BOTTOM BAR (kept from build, reskinned navy) */
+  #botbar{display:flex;height:58px;flex-shrink:0;border-top:1px solid var(--topbar-edge);background:var(--topbar);}
+  .b-logo{display:flex;align-items:center;justify-content:center;width:56px;font-weight:800;color:var(--accent);
+          font-size:19px;border-right:1px solid var(--topbar-edge);}
+  .b-clock{display:flex;flex-direction:column;justify-content:center;padding:0 16px;border-right:1px solid var(--topbar-edge);min-width:114px;}
+  .b-clock .t{font-size:19px;font-weight:600;color:#dfe5f5;} .b-clock .d{font-size:11px;color:var(--t-sub);}
+  .b-cell{display:flex;align-items:center;padding:0 16px;border-right:1px solid var(--topbar-edge);color:var(--t-sub);font-size:13px;}
+  .b-cell .v{color:#dfe5f5;font-weight:600;}
   .b-spacer{flex:1;}
-  .b-ack{display:flex;align-items:center;padding:0 22px;border-left:1px solid #23282e;color:var(--dim);font-size:14px;font-weight:600;cursor:pointer;}
-  .b-ack:hover{color:#fff;}
-  .b-mute{display:flex;align-items:center;justify-content:center;width:52px;border-left:1px solid #23282e;color:var(--dim);cursor:pointer;}
-  .stage-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:92px;
-             border-left:1px solid #23282e;cursor:pointer;color:var(--dim);transition:.13s;}
-  .stage-btn:hover{background:#1b1f24;color:#fff;}
-  .stage-btn.active{background:#1b1f24;color:#fff;box-shadow:inset 0 -3px 0 var(--accent);}
-  .stage-btn .ic{font-size:19px;line-height:1;} .stage-btn .lb{font-size:11px;font-weight:600;}
-  .b-warn{display:flex;align-items:center;justify-content:center;width:54px;border-left:1px solid #23282e;color:var(--loss);font-size:20px;}
+  .b-ack{display:flex;align-items:center;padding:0 20px;border-left:1px solid var(--topbar-edge);color:var(--t-sub);font-size:14px;font-weight:600;cursor:pointer;}
+  .b-ack:hover{color:#dfe5f5;}
+  .b-mute{display:flex;align-items:center;justify-content:center;width:50px;border-left:1px solid var(--topbar-edge);color:var(--t-sub);cursor:pointer;}
+  .stage-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:90px;
+             border-left:1px solid var(--topbar-edge);cursor:pointer;color:var(--t-sub);transition:.13s;}
+  .stage-btn:hover{background:#1a1e3a;color:#dfe5f5;}
+  .stage-btn.active{background:#1a1e3a;color:#dfe5f5;box-shadow:inset 0 -3px 0 var(--accent);}
+  .stage-btn .ic{font-size:18px;line-height:1;} .stage-btn .lb{font-size:11px;font-weight:600;}
+  .b-warn{display:flex;align-items:center;justify-content:center;width:52px;border-left:1px solid var(--topbar-edge);color:var(--warn);font-size:19px;}
 </style>
 </head>
 <body>
 <div id="app">
 
   <div id="topbar">
-    <div class="tab active" data-view="ALL">All Flows<span class="chev">▾</span></div>
-    <div class="tab" data-view="product">Products<span class="chev">▾</span></div>
-    <div class="tab" data-view="garnet">Garnet Circuit<span class="chev">▾</span></div>
-    <div class="tab" data-view="rutile">Rutile Circuit<span class="chev">▾</span></div>
-    <div class="tab" data-view="tailings">Tailings &amp; Rejects<span class="chev">▾</span></div>
-    <div class="spacer"></div>
-    <div class="tab src-tab"><b>OPUS&nbsp;Process</b>&nbsp;·&nbsp;Mass&nbsp;Flow<span class="chev">▾</span></div>
-    <div class="navbtn" id="nav-prev">◄</div>
-    <div class="navbtn" id="nav-next">►</div>
-    <div class="navbtn" id="nav-menu">☰</div>
+    <button class="tab active" data-view="ALL">All Flows</button>
+    <button class="tab" data-view="product">Products</button>
+    <button class="tab" data-view="garnet">Garnet Circuit</button>
+    <button class="tab" data-view="rutile">Rutile Circuit</button>
+    <button class="tab" data-view="tailings">Tailings &amp; Rejects</button>
+    <div class="src-label"><b>OPUS Process</b> &nbsp;Mass Flow</div>
+    <div class="wbtns">
+      <button class="wbtn" id="nav-prev">◄</button>
+      <button class="wbtn" id="nav-next">►</button>
+      <button class="wbtn" id="nav-menu">☰</button>
+    </div>
   </div>
 
   <div id="stage">
     <div id="title-badge">
       <div class="t1">Nordic Mining · Engebø</div>
       <div class="t2">Process Mass Balance</div>
-      <div class="t3">Current = live OPUS signals · gauge = vs digital-twin design</div>
+      <div class="t3">Current = live OPUS signals · bar = vs digital-twin design</div>
     </div>
-    <div id="legend"></div>
     <svg id="svg" viewBox="0 0 1920 1000" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="tooltip" id="tip"></div>
   </div>
@@ -131,50 +127,49 @@
 
 <script>
 /* =====================================================================
-   OPUS Process — Live Mass-Flow Sankey  (Engebø)
-   Information architecture mirrors the reference energy-flow dashboard:
-     SOURCE  ->  CONVERSION  ->  CIRCUITS  ->  METERED OUTPUTS (gauges)
-   Data: OPUS_Process_Sankey_Detailed_Area_Sheets.xlsx (Sankey_Data), areas 1000-5200.
+   OPUS Process — Live Mass-Flow Sankey (Engebø)
+   Visual design fused from Create_Identical_Design/App.tsx:
+     compact node badges over proportional flow bands, label/bar/value
+     destinations, dashed carrier-group separator, navy palette.
+   Data: OPUS_Process_Sankey_Detailed_Area_Sheets.xlsx (Sankey_Data).
    CURRENT = live OPUS signal (pollSignals → swap for real tag feed)
    DESIGN  = digital-twin / PDF reference (static)
    ===================================================================== */
-
 const NS='http://www.w3.org/2000/svg';
 
-// columns: 0 source · 1 conversion · 2 split · 3 circuits · 4 metered leaves
+// node centres (cx,cy), badge box size (bw,bh)
 const NODES = {
-  ROM : {col:0, name:'ROM Ore Feed',     code:'1000', kind:'source',  stage:'rom'},
-  COM : {col:1, name:'Crushing & Milling',code:'3100/3200', kind:'proc', stage:'comm'},
-  WET : {col:2, name:'Wet Plant Feed',   code:'4100', kind:'proc',    stage:'comm'},
-  GAR : {col:3, name:'Garnet Circuit',   code:'4200-4400', kind:'circuit', stage:'garnet'},
-  RUT : {col:3, name:'Rutile Circuit',   code:'4500', kind:'circuit', stage:'rutile'},
-  // metered leaf outputs (right gauge column)
-  CGP : {col:4, name:'Coarse Garnet Product', code:'4230', kind:'leaf', klass:'product'},
-  FGP : {col:4, name:'Fine Garnet Product',   code:'4430', kind:'leaf', klass:'product'},
-  RUP : {col:4, name:'Rutile Product',        code:'4530', kind:'leaf', klass:'product'},
-  CGR : {col:4, name:'Coarse Garnet Rejects', code:'4210', kind:'leaf', klass:'loss'},
-  FGR : {col:4, name:'Fine Garnet Rejects',   code:'4410', kind:'leaf', klass:'loss'},
-  RUR : {col:4, name:'Rutile Rejects',        code:'4510', kind:'leaf', klass:'loss'},
-  SLM : {col:4, name:'Thickened Slimes',      code:'4120', kind:'leaf', klass:'loss'},
+  ROM:{cx:132,cy:500,bw:98, bh:164,kind:'source', name:'ROM Ore Feed',      code:'1000',      stage:'rom'},
+  COM:{cx:422,cy:500,bw:154,bh:66, kind:'proc',   name:'Crushing & Milling',code:'3100/3200', stage:'comm'},
+  WET:{cx:700,cy:500,bw:140,bh:66, kind:'proc',   name:'Wet Plant Feed',    code:'4100',      stage:'comm'},
+  GAR:{cx:960,cy:277,bw:150,bh:66, kind:'circuit',name:'Garnet Circuit',    code:'4200-4400', stage:'garnet'},
+  RUT:{cx:960,cy:562,bw:140,bh:66, kind:'circuit',name:'Rutile Circuit',    code:'4500',      stage:'rutile'},
+  // metered leaf outputs (right column)
+  CGP:{leaf:1,cy:150,name:'Coarse Garnet Product',code:'4230',klass:'product',grp:'A'},
+  FGP:{leaf:1,cy:235,name:'Fine Garnet Product',  code:'4430',klass:'product',grp:'A'},
+  CGR:{leaf:1,cy:320,name:'Coarse Garnet Rejects', code:'4210',klass:'loss',  grp:'A'},
+  FGR:{leaf:1,cy:405,name:'Fine Garnet Rejects',   code:'4410',klass:'loss',  grp:'A'},
+  RUP:{leaf:1,cy:520,name:'Rutile Product',        code:'4530',klass:'product',grp:'B'},
+  RUR:{leaf:1,cy:605,name:'Rutile Rejects',        code:'4510',klass:'loss',  grp:'B'},
+  SLM:{leaf:1,cy:700,name:'Thickened Slimes',      code:'4120',klass:'loss',  grp:'B'},
 };
-// leaf vertical order (top→bottom)
-const LEAF_ORDER = ['CGP','FGP','RUP','CGR','FGR','RUR','SLM'];
+const LEAF_X=1180, LABEL_X=1192, BAR_X=1500, BAR_W=250, VAL_X=1888, SEP_Y=455;
 
-// LINKS — design tph (mass-balanced to 1000). cat used for highlight views.
 const LINKS = [
-  {s:'ROM', t:'COM', cat:'feed',    design:1000, tag:'load cells / haul trucks', desc:'Run-of-mine ore to comminution'},
-  {s:'COM', t:'WET', cat:'feed',    design:1000, tag:'3210-FT/DT-036', desc:'Crushed/milled solids to wet plant'},
-  {s:'WET', t:'GAR', cat:'feed',    design:820,  tag:'4110-FT/DT-029', desc:'Solids to coarse-garnet wet process'},
-  {s:'WET', t:'SLM', cat:'slimes',  design:180,  tag:'4120-FT/DT-004', desc:'Thickened slimes to co-disposal'},
-  {s:'GAR', t:'CGP', cat:'product', design:120,  tag:'4230-WT-092',   desc:'Coarse garnet product to silos'},
-  {s:'GAR', t:'FGP', cat:'product', design:90,   tag:'4430-WT-082',   desc:'Fine garnet product to silos'},
-  {s:'GAR', t:'CGR', cat:'reject',  design:220,  tag:'4210-FT/DT-043',desc:'CG gravity rejects to tailings'},
-  {s:'GAR', t:'FGR', cat:'reject',  design:210,  tag:'4410/4430 rejects',desc:'FG gravity + dry rejects'},
-  {s:'GAR', t:'RUT', cat:'feed',    design:180,  tag:'4320-FT/DT-042',desc:'Solids to rutile rougher circuit'},
-  {s:'RUT', t:'RUP', cat:'product', design:35,   tag:'4530-WT-086',   desc:'Rutile product to silos'},
-  {s:'RUT', t:'RUR', cat:'reject',  design:145,  tag:'4510/4520/4530 rejects',desc:'Rutile tails + pyrite + HTR/RER'},
+  {s:'ROM',t:'COM',cat:'feed',   design:1000,tag:'load cells / haul trucks',desc:'Run-of-mine ore to comminution'},
+  {s:'COM',t:'WET',cat:'feed',   design:1000,tag:'3210-FT/DT-036',desc:'Crushed/milled solids to wet plant'},
+  {s:'WET',t:'GAR',cat:'feed',   design:820, tag:'4110-FT/DT-029',desc:'Solids to coarse-garnet wet process'},
+  {s:'WET',t:'SLM',cat:'slimes', design:180, tag:'4120-FT/DT-004',desc:'Thickened slimes to co-disposal'},
+  {s:'GAR',t:'CGP',cat:'product',design:120, tag:'4230-WT-092',   desc:'Coarse garnet product to silos'},
+  {s:'GAR',t:'FGP',cat:'product',design:90,  tag:'4430-WT-082',   desc:'Fine garnet product to silos'},
+  {s:'GAR',t:'CGR',cat:'reject', design:220, tag:'4210-FT/DT-043',desc:'CG gravity rejects to tailings'},
+  {s:'GAR',t:'FGR',cat:'reject', design:210, tag:'4410/4430 rejects',desc:'FG gravity + dry rejects'},
+  {s:'GAR',t:'RUT',cat:'feed',   design:180, tag:'4320-FT/DT-042',desc:'Solids to rutile rougher circuit'},
+  {s:'RUT',t:'RUP',cat:'product',design:35,  tag:'4530-WT-086',   desc:'Rutile product to silos'},
+  {s:'RUT',t:'RUR',cat:'reject', design:145, tag:'4510/4520/4530 rejects',desc:'Rutile tails + pyrite + HTR/RER'},
 ];
 LINKS.forEach(l=>l.current=l.design);
+const MAX_LEAF=Math.max(...LINKS.filter(l=>NODES[l.t].leaf).map(l=>l.design));
 
 const STAGES=[
   {id:'rom',ic:'⛏',lb:'Feed'},{id:'comm',ic:'⚙',lb:'Comminution'},
@@ -182,141 +177,130 @@ const STAGES=[
   {id:'product',ic:'📦',lb:'Products'},{id:'tailings',ic:'🌊',lb:'Tailings'},
 ];
 
-// ---- geometry ----
-const W=1920,H=1000, COLX=[40,330,610,890,1240], NW=176, SCALE=0.30, MINH=92;
-const TOP=130, BOT=70;           // vertical band for chart
+const SCALE=0.20;     // tph → px band thickness
 const svg=document.getElementById('svg'), tip=document.getElementById('tip');
 let activeView='ALL', activeStage=null;
 
-function thru(id){
+const cur=id=>{
   const i=LINKS.filter(l=>l.t===id).reduce((a,l)=>a+l.current,0);
   const o=LINKS.filter(l=>l.s===id).reduce((a,l)=>a+l.current,0);
   return Math.max(i,o);
-}
-function designThru(id){
+};
+const dz=id=>{
   const i=LINKS.filter(l=>l.t===id).reduce((a,l)=>a+l.design,0);
   const o=LINKS.filter(l=>l.s===id).reduce((a,l)=>a+l.design,0);
   return Math.max(i,o);
-}
+};
 
 function layout(){
-  const pos={};
-  // box nodes (cols 0-3): height ∝ throughput, vertically centred per column
-  [0,1,2,3].forEach(c=>{
-    const ids=Object.keys(NODES).filter(i=>NODES[i].col===c);
-    const hs=ids.map(i=>Math.max(thru(i)*SCALE,MINH));
-    const tot=hs.reduce((a,b)=>a+b,0)+(ids.length-1)*30;
-    let y=TOP+((H-TOP-BOT)-tot)/2;
-    ids.forEach((i,k)=>{ pos[i]={x:COLX[c],y,w:NW,h:hs[k]}; y+=hs[k]+30; });
-  });
-  // leaf rows (col 4): evenly spaced fixed rows
-  const n=LEAF_ORDER.length, band=H-TOP-BOT, pitch=band/n;
-  LEAF_ORDER.forEach((id,k)=>{
-    const cy=TOP+pitch*(k+0.5);
-    pos[id]={x:COLX[4], cy, gw:430, isLeaf:true};
-  });
-  // link edge offsets
   const bySrc={},byTgt={};
   LINKS.forEach(l=>{(bySrc[l.s]=bySrc[l.s]||[]).push(l);(byTgt[l.t]=byTgt[l.t]||[]).push(l);});
+  const cyOf=id=>NODES[id].cy;
+  // outgoing: centre-stack on source cy, ordered by target cy
   Object.keys(bySrc).forEach(s=>{
-    bySrc[s].sort((a,b)=>cyOf(a.t,pos)-cyOf(b.t,pos));
-    let o=0; bySrc[s].forEach(l=>{ l._sy=pos[s].y+o+l.current*SCALE/2; o+=l.current*SCALE; });
+    const arr=bySrc[s].sort((a,b)=>cyOf(a.t)-cyOf(b.t));
+    const tot=arr.reduce((a,l)=>a+l.current*SCALE,0); let o=NODES[s].cy-tot/2;
+    arr.forEach(l=>{ l._sy=o+l.current*SCALE/2; o+=l.current*SCALE; });
   });
+  // incoming: leaf→single at cy; box→centre-stack on target cy
   Object.keys(byTgt).forEach(t=>{
-    byTgt[t].sort((a,b)=>cyOf(a.s,pos)-cyOf(b.s,pos));
-    if(pos[t].isLeaf){ byTgt[t].forEach(l=> l._ty=pos[t].cy ); }
-    else { let o=0; byTgt[t].forEach(l=>{ l._ty=pos[t].y+o+l.current*SCALE/2; o+=l.current*SCALE; }); }
+    const arr=byTgt[t].sort((a,b)=>cyOf(a.s)-cyOf(b.s));
+    if(NODES[t].leaf){ arr.forEach(l=> l._ty=NODES[t].cy); return; }
+    const tot=arr.reduce((a,l)=>a+l.current*SCALE,0); let o=NODES[t].cy-tot/2;
+    arr.forEach(l=>{ l._ty=o+l.current*SCALE/2; o+=l.current*SCALE; });
   });
-  return pos;
 }
-function cyOf(id,pos){ const p=pos[id]; return p.isLeaf?p.cy:p.y+p.h/2; }
-
-function ribbon(l,pos){
-  const a=pos[l.s], b=pos[l.t];
-  const x0=a.x+a.w, x1=b.isLeaf?b.x:b.x;
-  const w=Math.max(l.current*SCALE,2.5), y0=l._sy, y1=l._ty, cx=(x0+x1)/2;
-  return `M${x0},${y0-w/2} C${cx},${y0-w/2} ${cx},${y1-w/2} ${x1},${y1-w/2}`+
-         `L${x1},${y1+w/2} C${cx},${y1+w/2} ${cx},${y0+w/2} ${x0},${y0+w/2} Z`;
+function ribbon(l){
+  const S=NODES[l.s],T=NODES[l.t];
+  const x0=S.cx+S.bw/2, x1=T.leaf?LEAF_X:T.cx-T.bw/2;
+  const w=Math.max(l.current*SCALE,2.5), y0=l._sy,y1=l._ty, mx=(x0+x1)/2;
+  return `M ${x0} ${y0-w/2} C ${mx} ${y0-w/2} ${mx} ${y1-w/2} ${x1} ${y1-w/2}`+
+         ` L ${x1} ${y1+w/2} C ${mx} ${y1+w/2} ${mx} ${y0+w/2} ${x0} ${y0+w/2} Z`;
 }
-
-function el(t,a){const e=document.createElementNS(NS,t);if(a)for(const k in a)e.setAttribute(k,a[k]);return e;}
-function txt(x,y,s,cls,a){const e=el('text',Object.assign({x,y,class:cls},a||{}));e.textContent=s;return e;}
-function fmt(v){return Math.round(v).toLocaleString('en-US');}
-function devCol(d){return Math.abs(d)<3?'#27c46f':Math.abs(d)<8?'#f0992e':'#ff5a5f';}
+const el=(t,a)=>{const e=document.createElementNS(NS,t);if(a)for(const k in a)e.setAttribute(k,a[k]);return e;};
+const txt=(x,y,s,cls,a)=>{const e=el('text',Object.assign({x,y,class:cls},a||{}));e.textContent=s;return e;};
+const fmt=v=>Math.round(v).toLocaleString('en-US');
+const devCol=d=>Math.abs(d)<3?'var(--ok)':Math.abs(d)<8?'var(--warn)':'var(--bad)';
 
 function build(){
-  const pos=layout(); svg.innerHTML='';
+  layout(); svg.innerHTML='';
   const defs=el('defs');
-  const g=el('linearGradient',{id:'flow',x1:'0',x2:'1',y1:'0',y2:'0'});
-  g.appendChild(el('stop',{offset:'0%','stop-color':'#1f74ff','stop-opacity':'.45'}));
-  g.appendChild(el('stop',{offset:'100%','stop-color':'#5fa0ff','stop-opacity':'.75'}));
+  const g=el('linearGradient',{id:'flowGrad',x1:'0%',y1:'0%',x2:'100%',y2:'0%'});
+  g.appendChild(el('stop',{offset:'0%','stop-color':'#1855c8','stop-opacity':'.45'}));
+  g.appendChild(el('stop',{offset:'100%','stop-color':'#1e6de8','stop-opacity':'.62'}));
   defs.appendChild(g); svg.appendChild(defs);
 
+  // flow bands
   const gl=el('g'); svg.appendChild(gl);
   LINKS.forEach(l=>{
-    const p=el('path',{d:ribbon(l,pos),fill:'url(#flow)',class:'link'});
+    const p=el('path',{d:ribbon(l),fill:'url(#flowGrad)',stroke:'rgba(50,130,230,0.18)','stroke-width':.5,class:'link'});
     p.addEventListener('mousemove',e=>showTip(e,linkTip(l)));
     p.addEventListener('mouseleave',hideTip);
     l._el=p; gl.appendChild(p);
   });
 
+  // group captions + dashed separator (carrier groups, App.tsx style)
+  const gc=el('g'); svg.appendChild(gc);
+  gc.appendChild(txt(LABEL_X,118,'GARNET CIRCUIT','grp-cap'));
+  gc.appendChild(txt(LABEL_X,488,'RUTILE CIRCUIT & SLIMES','grp-cap'));
+  gc.appendChild(el('line',{x1:LEAF_X,y1:SEP_Y,x2:VAL_X+2,y2:SEP_Y,stroke:'var(--sep)','stroke-width':.75,'stroke-dasharray':'4 4'}));
+
+  // nodes
   const gn=el('g'); svg.appendChild(gn);
   Object.keys(NODES).forEach(id=>{
-    const n=NODES[id], p=pos[id];
-    if(p.isLeaf){ buildLeaf(gn,id,n,p); return; }
+    const n=NODES[id];
+    if(n.leaf){ buildLeaf(gn,id,n); return; }
     const grp=el('g',{class:'node'}); grp.dataset.id=id; grp.dataset.stage=n.stage;
-    grp.appendChild(el('rect',{x:p.x,y:p.y,width:p.w,height:p.h,rx:4,class:'node-rect'}));
-    grp.appendChild(el('rect',{x:p.x,y:p.y,width:4,height:p.h,fill:'#1f74ff'}));
-    grp.appendChild(txt(p.x+16,p.y+26,n.name,'n-title'));
-    const cur=thru(id);
-    const vy=p.y+62;
-    const vt=txt(p.x+16,vy,fmt(cur),'n-val mono'); grp.appendChild(vt);
-    grp.appendChild(txt(p.x+16+fmt(cur).length*16+8,vy,'tph','n-unit'));
-    grp.appendChild(txt(p.x+16,vy+20,'design '+fmt(designThru(id))+' · '+n.code,'n-sub'));
+    const x=n.cx-n.bw/2, y=n.cy-n.bh/2;
+    grp.appendChild(el('rect',{x,y,width:n.bw,height:n.bh,rx:5,class:'n-rect'}));
+    if(n.kind==='source'){
+      grp.appendChild(txt(n.cx,y+22,n.name,'n-name',{'text-anchor':'middle'}));
+      grp.appendChild(el('line',{x1:x+12,y1:y+32,x2:x+n.bw-12,y2:y+32,class:'ndiv'}));
+      grp.appendChild(txt(n.cx,y+50,'Feed rate','n-sub',{'text-anchor':'middle'}));
+      const vt=txt(n.cx,y+68,fmt(cur(id))+' tph','n-val',{'text-anchor':'middle'}); grp.appendChild(vt);
+      grp.appendChild(el('line',{x1:x+12,y1:y+82,x2:x+n.bw-12,y2:y+82,class:'ndiv'}));
+      grp.appendChild(txt(n.cx,y+100,'Design','n-sub',{'text-anchor':'middle'}));
+      grp.appendChild(txt(n.cx,y+118,fmt(dz(id))+' tph','n-val',{'text-anchor':'middle'}));
+      grp.appendChild(txt(n.cx,y+150,n.code,'n-sub',{'text-anchor':'middle'}));
+      n._vt=vt;
+    } else {
+      grp.appendChild(txt(n.cx,n.cy-10,n.name,'n-name',{'text-anchor':'middle'}));
+      const vt=txt(n.cx,n.cy+9,fmt(cur(id))+' tph','n-val',{'text-anchor':'middle'}); grp.appendChild(vt);
+      grp.appendChild(txt(n.cx,n.cy+23,'design '+fmt(dz(id)),'n-sub',{'text-anchor':'middle'}));
+      n._vt=vt;
+    }
     grp.addEventListener('mousemove',e=>showTip(e,nodeTip(id)));
     grp.addEventListener('mouseleave',hideTip);
-    n._el=grp; n._vt=vt; gn.appendChild(grp);
+    n._el=grp; gn.appendChild(grp);
   });
   applyView();
 }
 
-function buildLeaf(parent,id,n,p){
-  const grp=el('g',{class:'leaf'}); grp.dataset.id=id; grp.dataset.stage=(n.klass==='product'?'product':'tailings');
-  const x=p.x, gw=p.gw, barY=p.cy+4, nameY=p.cy-12;
-  const accent = n.klass==='product' ? '#1f74ff' : '#f0992e';
-  // dot + name
-  grp.appendChild(el('circle',{cx:x+5,cy:nameY-4,r:4,fill:accent}));
-  grp.appendChild(txt(x+18,nameY,n.name,'leaf-name'));
-  // gauge track + fill + handle
-  grp.appendChild(el('rect',{x:x,y:barY,width:gw,height:10,rx:5,class:'gtrack'}));
-  const cur=thru(id), dz=designThru(id), ratio=Math.max(.04,Math.min(1.1,cur/dz));
-  const fw=gw*Math.min(ratio,1);
-  const gf=el('rect',{x:x,y:barY,width:fw,height:10,rx:5,fill:accent,class:'gfill','fill-opacity':'.85'});
+function buildLeaf(parent,id,n){
+  const grp=el('g',{class:'leaf'}); grp.dataset.id=id;
+  grp.dataset.stage=(n.klass==='product'?'product':'tailings');
+  const y=n.cy;
+  grp.appendChild(txt(LABEL_X,y+4,n.name,'leaf-name'));
+  grp.appendChild(el('rect',{x:BAR_X,y:y-7,width:BAR_W,height:13,rx:2,fill:'var(--bar-bg)'}));
+  const fw=Math.round((cur(id)/MAX_LEAF)*BAR_W);
+  const gf=el('rect',{x:BAR_X,y:y-7,width:fw,height:13,rx:2,fill:'var(--bar-fill)',class:'gfill'});
   grp.appendChild(gf);
-  const hd=el('rect',{x:x+fw-1.5,y:barY-3,width:3,height:16,rx:1,fill:'#cfe0ff',class:'ghandle'});
-  grp.appendChild(hd);
-  // value
-  const vx=x+gw+24;
-  const vt=txt(vx,p.cy+8,fmt(cur),'leaf-val mono'); grp.appendChild(vt);
-  grp.appendChild(txt(vx+fmt(cur).length*16+6,p.cy+8,'tph','leaf-unit'));
+  const vt=txt(VAL_X,y+4,fmt(cur(id))+' tph','leaf-val',{'text-anchor':'end'}); grp.appendChild(vt);
   grp.addEventListener('mousemove',e=>showTip(e,nodeTip(id)));
   grp.addEventListener('mouseleave',hideTip);
-  n._el=grp; n._vt=vt; n._gf=gf; n._hd=hd; n._gw=gw; n._x=x; parent.appendChild(grp);
+  n._el=grp; n._gf=gf; n._vt=vt; parent.appendChild(grp);
 }
 
-// ---- highlight views ----
+// ── highlight views ──
 function linkOn(l){
-  if(activeView==='ALL' && !activeStage) return true;
   let on=true;
-  if(activeView!=='ALL'){
-    if(activeView==='product') on = l.cat==='product';
-    else if(activeView==='tailings') on = (l.cat==='reject'||l.cat==='slimes');
-    else if(activeView==='garnet') on = (l.s==='GAR'||l.t==='GAR'||l.s==='ROM'||l.s==='COM'||l.s==='WET'&&l.t==='GAR');
-    else if(activeView==='rutile') on = (l.s==='RUT'||l.t==='RUT');
-  }
+  if(activeView==='product') on=l.cat==='product';
+  else if(activeView==='tailings') on=(l.cat==='reject'||l.cat==='slimes');
+  else if(activeView==='garnet') on=(l.s==='GAR'||l.t==='GAR'||l.s==='ROM'||l.s==='COM'||(l.s==='WET'&&l.t==='GAR'));
+  else if(activeView==='rutile') on=(l.s==='RUT'||l.t==='RUT');
   if(activeStage){
-    const sStg=NODES[l.s].stage, tStg=NODES[l.t].stage||(NODES[l.t].klass==='product'?'product':'tailings');
-    on = on && (sStg===activeStage||tStg===activeStage);
+    const sStg=NODES[l.s].stage||'tailings', tStg=NODES[l.t].stage||(NODES[l.t].klass==='product'?'product':'tailings');
+    on=on&&(sStg===activeStage||tStg===activeStage);
   }
   return on;
 }
@@ -325,28 +309,28 @@ function applyView(){
   Object.keys(NODES).forEach(id=>{
     const n=NODES[id]; let on=true;
     const stg=n.stage||(n.klass==='product'?'product':'tailings');
-    if(activeStage) on = (stg===activeStage);
-    if(activeView==='product') on = on && (n.kind!=='leaf'||n.klass==='product');
-    if(activeView==='tailings') on = on && (n.kind!=='leaf'||n.klass==='loss');
-    n._el.classList.toggle('dim', (activeView!=='ALL'||activeStage)? !on : false);
+    if(activeStage) on=(stg===activeStage);
+    if(activeView==='product') on=on&&(!n.leaf||n.klass==='product');
+    if(activeView==='tailings') on=on&&(!n.leaf||n.klass==='loss');
+    n._el.classList.toggle('dim',(activeView!=='ALL'||activeStage)? !on : false);
   });
 }
 
-// ---- tooltips ----
+// ── tooltips ──
 function linkTip(l){
-  const dev=(l.current-l.design)/l.design*100;
+  const d=(l.current-l.design)/l.design*100;
   return `<b>${NODES[l.s].name} → ${NODES[l.t].name}</b>
    <div class="row"><span>${l.desc}</span></div>
    <div class="row"><span>Current</span><span class="mono">${fmt(l.current)} tph</span></div>
    <div class="row"><span>Design</span><span class="mono">${fmt(l.design)} tph</span></div>
-   <div class="row"><span>Deviation</span><span class="mono" style="color:${devCol(dev)}">${dev>0?'+':''}${dev.toFixed(1)}%</span></div>
+   <div class="row"><span>Deviation</span><span class="mono" style="color:${devCol(d)}">${d>0?'+':''}${d.toFixed(1)}%</span></div>
    <div class="row"><span>Tag</span><span class="mono">${l.tag}</span></div>`;
 }
 function nodeTip(id){
-  const n=NODES[id], cur=thru(id), dz=designThru(id), dev=(cur-dz)/dz*100;
+  const n=NODES[id], c=cur(id), d=dz(id), dev=(c-d)/d*100;
   return `<b>${n.code} — ${n.name}</b>
-   <div class="row"><span>Current</span><span class="mono">${fmt(cur)} tph</span></div>
-   <div class="row"><span>Design</span><span class="mono">${fmt(dz)} tph</span></div>
+   <div class="row"><span>Current</span><span class="mono">${fmt(c)} tph</span></div>
+   <div class="row"><span>Design</span><span class="mono">${fmt(d)} tph</span></div>
    <div class="row"><span>Deviation</span><span class="mono" style="color:${devCol(dev)}">${dev>0?'+':''}${dev.toFixed(1)}%</span></div>`;
 }
 function showTip(e,html){
@@ -356,26 +340,23 @@ function showTip(e,html){
   if(x+280>r.width)x=e.clientX-r.left-280;
   tip.style.left=x+'px'; tip.style.top=y+'px';
 }
-function hideTip(){tip.style.opacity='0';}
+const hideTip=()=>tip.style.opacity='0';
 
-// ---- live signal sim (replace with real OPUS feed) ----
+// ── live signal sim (replace with real OPUS tag feed) ──
 function pollSignals(){
   LINKS.forEach(l=>{
     const d=l.design, noise=(Math.random()-0.5)*0.03*d;
-    l.current += noise + (d-l.current)*0.18;
-    l.current = Math.max(d*0.86, Math.min(d*1.10, l.current));
+    l.current+=noise+(d-l.current)*0.18;
+    l.current=Math.max(d*0.86,Math.min(d*1.10,l.current));
   });
 }
 function refresh(){
-  const pos=layout();
-  LINKS.forEach(l=> l._el.setAttribute('d', ribbon(l,pos)) );
+  layout();
+  LINKS.forEach(l=> l._el.setAttribute('d',ribbon(l)) );
   Object.keys(NODES).forEach(id=>{
-    const n=NODES[id], cur=thru(id);
-    if(n._vt) n._vt.textContent=fmt(cur);
-    if(n._gf){
-      const dz=designThru(id), ratio=Math.max(.04,Math.min(1.1,cur/dz)), fw=n._gw*Math.min(ratio,1);
-      n._gf.setAttribute('width',fw); n._hd.setAttribute('x',n._x+fw-1.5);
-    }
+    const n=NODES[id], c=cur(id);
+    if(n._vt) n._vt.textContent = fmt(c)+' tph';
+    if(n._gf) n._gf.setAttribute('width', Math.round((c/MAX_LEAF)*BAR_W));
   });
   const feed=LINKS.find(l=>l.s==='ROM').current;
   const prod=LINKS.filter(l=>l.cat==='product').reduce((a,l)=>a+l.current,0);
@@ -383,16 +364,11 @@ function refresh(){
   document.getElementById('kpi-rec').textContent=(prod/feed*100).toFixed(1);
 }
 
-// ---- UI wiring ----
+// ── UI wiring ──
 document.querySelectorAll('.tab[data-view]').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab[data-view]').forEach(x=>x.classList.remove('active'));
   t.classList.add('active'); activeView=t.dataset.view; applyView();
 }));
-const lg=document.getElementById('legend');
-[['#1f74ff','Process / product flow'],['#f0992e','Tailings / rejects']].forEach(([c,t])=>{
-  const d=document.createElement('div'); d.className='lg';
-  d.innerHTML=`<span class="sw" style="background:${c}"></span>${t}`; lg.appendChild(d);
-});
 const sn=document.getElementById('stagenav');
 STAGES.forEach(s=>{
   const b=document.createElement('div'); b.className='stage-btn'; b.dataset.stage=s.id;
@@ -400,7 +376,7 @@ STAGES.forEach(s=>{
   b.addEventListener('click',()=>{
     const was=b.classList.contains('active');
     document.querySelectorAll('.stage-btn').forEach(x=>x.classList.remove('active'));
-    activeStage = was?null:s.id; if(!was)b.classList.add('active'); applyView();
+    activeStage=was?null:s.id; if(!was)b.classList.add('active'); applyView();
   });
   sn.appendChild(b);
 });
@@ -412,8 +388,7 @@ document.getElementById('nav-menu').addEventListener('click',()=>{
 });
 let muted=false;
 document.getElementById('mute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊';});
-document.getElementById('ack').addEventListener('click',function(){this.style.color='#27c46f';setTimeout(()=>this.style.color='',600);});
-
+document.getElementById('ack').addEventListener('click',function(){this.style.color='var(--ok)';setTimeout(()=>this.style.color='',600);});
 function tick(){
   const d=new Date();
   document.getElementById('clock').textContent=d.toLocaleTimeString('en-GB');
