@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OPUS Process — Live Mass Flow · Engebø</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-top:#16191d; --bg-bot:#0d0f12;
+    --panel:#2b3036; --panel-edge:#3a4047; --panel-hi:#343a41;
+    --txt:#e9edf1; --txt-dim:#8a929b; --txt-mut:#5f676f;
+    --feed:#2f80ff; --feed-2:#5b9bff;
+    --product:#27c46f; --recycle:#a06bff; --loss:#ff8a3d; --final:#ff5a5f;
+    --tab:#2f343a; --tab-edge:#42484f; --accent:#2f80ff;
+    --ok:#27c46f; --warn:#ffb02e; --bad:#ff5a5f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#0d0f12;font-family:Inter,system-ui,sans-serif;color:var(--txt);overflow:hidden;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  #app{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column;
+       background:linear-gradient(180deg,var(--bg-top),var(--bg-bot));}
+
+  /* ---------- TOP BAR ---------- */
+  #topbar{display:flex;align-items:stretch;gap:2px;height:48px;padding:6px 8px;flex-shrink:0;}
+  .tab{display:flex;align-items:center;gap:10px;padding:0 18px;background:var(--tab);
+       border:1px solid var(--tab-edge);border-radius:3px;cursor:pointer;min-width:150px;
+       font-size:15px;font-weight:600;color:var(--txt-dim);user-select:none;transition:.15s;}
+  .tab .chev{margin-left:auto;color:var(--txt-mut);font-size:11px;}
+  .tab .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .tab:hover{background:var(--panel-hi);color:var(--txt);}
+  .tab.active{color:#fff;border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+  .tab.active .chev{color:#fff;}
+  .spacer{flex:1;}
+  .src-tab{min-width:230px;color:var(--txt-dim);}
+  .src-tab b{color:var(--txt);font-weight:700;}
+  .navbtn{display:flex;align-items:center;justify-content:center;width:54px;background:var(--tab);
+          border:1px solid var(--tab-edge);border-radius:3px;cursor:pointer;color:var(--txt-dim);font-size:16px;}
+  .navbtn:hover{background:var(--panel-hi);color:#fff;}
+
+  /* ---------- CHART ---------- */
+  #stage{flex:1;position:relative;min-height:0;}
+  svg{position:absolute;inset:0;width:100%;height:100%;}
+  .link{fill-opacity:.34;transition:fill-opacity .25s;}
+  .link.hot{fill-opacity:.85;}
+  .link.dim{fill-opacity:.06;}
+  .node-rect{fill:var(--panel);stroke:var(--panel-edge);stroke-width:1;transition:opacity .25s;}
+  .node-accent{transition:opacity .25s;}
+  .node.dim{opacity:.28;}
+  .n-title{fill:var(--txt-dim);font-size:13px;font-weight:600;letter-spacing:.02em;}
+  .n-code{fill:var(--txt-mut);font-size:11px;font-weight:600;}
+  .n-val{fill:var(--txt);font-size:21px;font-weight:600;}
+  .n-unit{fill:var(--txt-mut);font-size:11px;}
+  .n-sub{fill:var(--txt-dim);font-size:11px;}
+  .ext-name{fill:var(--txt-dim);font-size:14px;font-weight:600;}
+  .ext-val{fill:var(--txt);font-size:24px;font-weight:600;}
+  .ext-unit{fill:var(--txt-mut);font-size:12px;}
+  .gauge-bg{fill:#1b1f24;stroke:#2f353c;stroke-width:1;}
+  .gauge-fill{transition:width .8s cubic-bezier(.4,0,.2,1);}
+  .gauge-tick{stroke:#454c54;stroke-width:1;}
+  .tooltip{position:absolute;pointer-events:none;background:#10141a;border:1px solid #2f353c;
+           border-radius:5px;padding:10px 12px;font-size:12px;color:var(--txt);
+           box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .12s;max-width:260px;z-index:20;}
+  .tooltip b{color:#fff;} .tooltip .row{display:flex;justify-content:space-between;gap:18px;margin-top:3px;color:var(--txt-dim);}
+  .tooltip .row span:last-child{color:var(--txt);}
+
+  /* legend */
+  #legend{position:absolute;top:14px;right:18px;display:flex;gap:16px;background:rgba(16,20,26,.7);
+          border:1px solid #2a2f35;border-radius:4px;padding:8px 14px;font-size:12px;color:var(--txt-dim);z-index:5;}
+  #legend .lg{display:flex;align-items:center;gap:7px;cursor:pointer;}
+  #legend .sw{width:14px;height:8px;border-radius:2px;}
+  #title-badge{position:absolute;top:14px;left:18px;z-index:5;}
+  #title-badge .t1{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:700;text-transform:uppercase;}
+  #title-badge .t2{font-size:20px;font-weight:700;color:#fff;margin-top:2px;}
+  #title-badge .t3{font-size:12px;color:var(--txt-dim);margin-top:1px;}
+
+  /* ---------- BOTTOM BAR ---------- */
+  #botbar{display:flex;align-items:stretch;height:64px;flex-shrink:0;border-top:1px solid #23282e;
+          background:linear-gradient(180deg,#15181c,#101316);}
+  .b-logo{display:flex;align-items:center;justify-content:center;width:64px;font-weight:800;color:var(--accent);
+          font-size:20px;border-right:1px solid #23282e;}
+  .b-clock{display:flex;flex-direction:column;justify-content:center;padding:0 18px;border-right:1px solid #23282e;min-width:120px;}
+  .b-clock .t{font-size:20px;font-weight:600;}
+  .b-clock .d{font-size:11px;color:var(--txt-mut);}
+  .b-cell{display:flex;align-items:center;padding:0 16px;border-right:1px solid #23282e;color:var(--txt-dim);font-size:13px;min-width:120px;}
+  .b-cell .v{color:var(--txt);font-weight:600;}
+  .b-spacer{flex:1;}
+  .b-ack{display:flex;align-items:center;padding:0 22px;border-left:1px solid #23282e;color:var(--txt-dim);
+         font-size:14px;font-weight:600;cursor:pointer;}
+  .b-ack:hover{color:#fff;}
+  .b-mute{display:flex;align-items:center;justify-content:center;width:54px;border-left:1px solid #23282e;color:var(--txt-dim);cursor:pointer;}
+  .stage-nav{display:flex;align-items:stretch;}
+  .stage-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             width:96px;border-left:1px solid #23282e;cursor:pointer;color:var(--txt-dim);transition:.15s;}
+  .stage-btn:hover{background:#1b1f24;color:#fff;}
+  .stage-btn.active{background:#1b1f24;color:#fff;box-shadow:inset 0 -3px 0 var(--accent);}
+  .stage-btn .ic{font-size:20px;line-height:1;}
+  .stage-btn .lb{font-size:11px;font-weight:600;letter-spacing:.02em;}
+  .stage-btn .dotmk{position:absolute;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TOP TABS (flow category toggles) ===== -->
+  <div id="topbar">
+    <div class="tab active" data-cat="ALL"><span class="dot" style="background:#cdd3da"></span>All Flows<span class="chev">▾</span></div>
+    <div class="tab" data-cat="feed"><span class="dot" style="background:var(--feed)"></span>Main Feed<span class="chev">▾</span></div>
+    <div class="tab" data-cat="product"><span class="dot" style="background:var(--product)"></span>Products<span class="chev">▾</span></div>
+    <div class="tab" data-cat="recycle"><span class="dot" style="background:var(--recycle)"></span>Recovery<span class="chev">▾</span></div>
+    <div class="tab" data-cat="loss"><span class="dot" style="background:var(--loss)"></span>Tailings<span class="chev">▾</span></div>
+    <div class="spacer"></div>
+    <div class="tab src-tab"><b>OPUS&nbsp;Process</b>&nbsp;·&nbsp;Mass&nbsp;Flow<span class="chev">▾</span></div>
+    <div class="navbtn" id="nav-prev">◄</div>
+    <div class="navbtn" id="nav-next">►</div>
+    <div class="navbtn" id="nav-menu">☰</div>
+  </div>
+
+  <!-- ===== SANKEY STAGE ===== -->
+  <div id="stage">
+    <div id="title-badge">
+      <div class="t1">Nordic Mining · Engebø</div>
+      <div class="t2">Process Mass Balance</div>
+      <div class="t3">Live signals (current) vs digital-twin design</div>
+    </div>
+    <div id="legend"></div>
+    <svg id="svg" viewBox="0 0 1920 1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="tooltip" id="tip"></div>
+  </div>
+
+  <!-- ===== BOTTOM BAR ===== -->
+  <div id="botbar">
+    <div class="b-logo">Ø</div>
+    <div class="b-clock"><span class="t mono" id="clock">--:--:--</span><span class="d" id="date">—</span></div>
+    <div class="b-cell">Total feed&nbsp;<span class="v mono" id="kpi-feed">—</span>&nbsp;tph</div>
+    <div class="b-cell">Plant recovery&nbsp;<span class="v mono" id="kpi-rec">—</span>&nbsp;%</div>
+    <div class="b-spacer"></div>
+    <div class="b-ack" id="ack">Ack</div>
+    <div class="b-mute" id="mute">🔊</div>
+    <div class="stage-nav" id="stagenav"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   OPUS Process — Live Mass-Flow Sankey
+   Topology + tags from OPUS_Process_Sankey_Detailed_Area_Sheets.xlsx (Sankey_Data).
+   CURRENT value  = live OPUS signal  (here: simulated random-walk around design)
+   DESIGN value   = digital-twin / PDF reference (static)
+   Replace pollSignals() with a real OPUS tag feed to go fully live.
+   ===================================================================== */
+
+// ---- NODES ---------------------------------------------------------
+// kind: process | product | sink   ; stage = bottom-nav grouping
+const NODES = {
+  '1000': {code:'1000', name:'Open Pit Mining',          kind:'process', stage:'mining'},
+  '3100': {code:'3100', name:'Ore Crushing & Screening', kind:'process', stage:'crushing'},
+  '3200': {code:'3200', name:'Primary Milling',          kind:'process', stage:'milling'},
+  '4100': {code:'4100', name:'Primary Feed Prep',        kind:'process', stage:'garnet'},
+  '4200': {code:'4200', name:'Coarse Garnet Processing', kind:'process', stage:'garnet'},
+  '4300': {code:'4300', name:'Secondary Feed Prep',      kind:'process', stage:'garnet'},
+  '4400': {code:'4400', name:'Fine Garnet Processing',   kind:'process', stage:'garnet'},
+  '4500': {code:'4500', name:'Rutile Processing',        kind:'process', stage:'rutile'},
+  '5100': {code:'5100', name:'Tailings Dewatering',      kind:'process', stage:'tailings'},
+  '5200': {code:'5200', name:'Co-Disposal',              kind:'sink',    stage:'tailings'},
+  'P_CG': {code:'4230', name:'Coarse Garnet Product',    kind:'product', stage:'garnet'},
+  'P_FG': {code:'4430', name:'Fine Garnet Product',      kind:'product', stage:'garnet'},
+  'P_RU': {code:'4530', name:'Rutile Product',           kind:'product', stage:'rutile'},
+};
+
+// ---- LINKS (design tph values, mass-balanced) ----------------------
+// cat: feed | loss | product | recycle | final
+const LINKS = [
+  {s:'1000', t:'3100', cat:'feed',    design:1000, tag:'load cells / haul trucks', desc:'Ore delivered to ore-pass'},
+  {s:'3100', t:'3200', cat:'feed',    design:1000, tag:'3150-WT-011',  desc:'Ore to mill feed silos'},
+  {s:'3200', t:'4100', cat:'feed',    design:1000, tag:'3210-FT/DT-036',desc:'Solids to wet plant'},
+  {s:'4100', t:'4200', cat:'feed',    design:820,  tag:'4110-FT/DT-029',desc:'Solids to CG wet process'},
+  {s:'4100', t:'5100', cat:'loss',    design:180,  tag:'4120-FT/DT-004',desc:'Thickened slimes to co-disposal'},
+  {s:'4200', t:'P_CG', cat:'product', design:120,  tag:'4230-WT-092',  desc:'Coarse garnet product to silos'},
+  {s:'4200', t:'4300', cat:'recycle', design:480,  tag:'4210/4230 rejects',desc:'CG regrind + dry rejects to secondary'},
+  {s:'4200', t:'5100', cat:'loss',    design:220,  tag:'4210-FT/DT-043',desc:'CG gravity rejects to tailings'},
+  {s:'4300', t:'4400', cat:'feed',    design:300,  tag:'4320-FT/DT-040',desc:'Solids to FG UCC dewatering'},
+  {s:'4300', t:'4500', cat:'feed',    design:180,  tag:'4320-FT/DT-042',desc:'Solids to rutile rougher'},
+  {s:'4400', t:'P_FG', cat:'product', design:90,   tag:'4430-WT-082',  desc:'Fine garnet product to silos'},
+  {s:'4400', t:'5100', cat:'loss',    design:210,  tag:'4410/4430 rejects',desc:'FG gravity + dry rejects'},
+  {s:'4500', t:'P_RU', cat:'product', design:35,   tag:'4530-WT-086',  desc:'Rutile product to silos'},
+  {s:'4500', t:'5100', cat:'loss',    design:145,  tag:'4510/4520/4530 rejects',desc:'Rutile tails + pyrite + HTR/RER'},
+  {s:'5100', t:'5200', cat:'final',   design:755,  tag:'5100-FT/DT-031',desc:'Underflow slurry to co-disposal'},
+];
+
+const CAT_COLOR = {feed:'#2f80ff', loss:'#ff8a3d', product:'#27c46f', recycle:'#a06bff', final:'#ff5a5f'};
+const CAT_LABEL = {feed:'Main feed', loss:'Tailings / loss', product:'Product', recycle:'Recovery / recycle', final:'Final tailings'};
+const STAGES = [
+  {id:'mining',  ic:'⛏', lb:'Mining'},
+  {id:'crushing',ic:'🪨', lb:'Crushing'},
+  {id:'milling', ic:'⚙', lb:'Milling'},
+  {id:'garnet',  ic:'🔶', lb:'Garnet'},
+  {id:'rutile',  ic:'🔷', lb:'Rutile'},
+  {id:'tailings',ic:'🌊', lb:'Tailings'},
+];
+
+// init live current values from design
+LINKS.forEach(l=>{ l.current = l.design; });
+
+// ---- LAYOUT --------------------------------------------------------
+const NS='http://www.w3.org/2000/svg';
+const W=1920, H=1000;
+const M={l:40,r:40,t:70,b:40};
+const innerW=W-M.l-M.r, innerH=H-M.t-M.b;
+let SCALE=0.30;                 // tph -> px
+const GAP=20, MINH=30, NODE_W=180;
+
+function computeLayers(){
+  const ids=Object.keys(NODES);
+  const indeg={}, layer={};
+  ids.forEach(i=>{indeg[i]=0;layer[i]=0;});
+  LINKS.forEach(l=>indeg[l.t]++);
+  // longest path from sources
+  let changed=true;
+  while(changed){ changed=false;
+    LINKS.forEach(l=>{ if(layer[l.t] < layer[l.s]+1){ layer[l.t]=layer[l.s]+1; changed=true; } });
+  }
+  // right-align terminal product / final sink to the last column
+  const maxL=Math.max(...ids.map(i=>layer[i]));
+  ids.forEach(i=>{ if(NODES[i].kind==='product'||NODES[i].kind==='sink') layer[i]=maxL; });
+  return {layer,maxL};
+}
+
+function layout(){
+  const {layer,maxL}=computeLayers();
+  const cols={};
+  Object.keys(NODES).forEach(i=>{ (cols[layer[i]]=cols[layer[i]]||[]).push(i); });
+
+  // node throughput
+  const thru={};
+  Object.keys(NODES).forEach(i=>{
+    const sin=LINKS.filter(l=>l.t===i).reduce((a,l)=>a+l.current,0);
+    const sout=LINKS.filter(l=>l.s===i).reduce((a,l)=>a+l.current,0);
+    thru[i]=Math.max(sin,sout,1);
+  });
+
+  // dynamic scale so tallest column fits
+  let maxColPx=0;
+  Object.values(cols).forEach(arr=>{
+    const sum=arr.reduce((a,i)=>a+Math.max(thru[i]*0.30,MINH),0)+(arr.length-1)*GAP;
+    maxColPx=Math.max(maxColPx,sum);
+  });
+  SCALE = Math.min(0.34, (innerH)/ (maxColPx/0.30) );
+  if(!isFinite(SCALE)||SCALE<=0) SCALE=0.30;
+
+  const colX = c => M.l + (innerW-NODE_W) * (c/maxL);
+  const pos={};
+  Object.keys(cols).forEach(c=>{
+    const arr=cols[c];
+    arr.sort((a,b)=> orderKey(a)-orderKey(b));
+    const heights=arr.map(i=>Math.max(thru[i]*SCALE,MINH));
+    const total=heights.reduce((a,b)=>a+b,0)+(arr.length-1)*GAP;
+    let y=M.t+(innerH-total)/2;
+    arr.forEach((i,k)=>{
+      pos[i]={x:colX(+c), y, w:NODE_W, h:heights[k], thru:thru[i], col:+c};
+      y+=heights[k]+GAP;
+    });
+  });
+
+  // link offsets along node edges (ordered by partner vertical pos)
+  const outOff={}, inOff={};
+  Object.keys(NODES).forEach(i=>{outOff[i]=0;inOff[i]=0;});
+  // order links per source by target y
+  Object.keys(NODES).forEach(i=>{
+    LINKS.filter(l=>l.s===i).sort((a,b)=>pos[a.t].y-pos[b.t].y);
+  });
+  LINKS.sort((a,b)=> (pos[a.s].col-pos[b.s].col) );
+  // assign
+  const bySrc={}, byTgt={};
+  LINKS.forEach(l=>{(bySrc[l.s]=bySrc[l.s]||[]).push(l);(byTgt[l.t]=byTgt[l.t]||[]).push(l);});
+  Object.keys(bySrc).forEach(s=> bySrc[s].sort((a,b)=>pos[a.t].y-pos[b.t].y) );
+  Object.keys(byTgt).forEach(t=> byTgt[t].sort((a,b)=>pos[a.s].y-pos[b.s].y) );
+  Object.keys(bySrc).forEach(s=>{ let o=0; bySrc[s].forEach(l=>{ l._sy=pos[s].y+o+l.current*SCALE/2; l._so=o; o+=l.current*SCALE; }); });
+  Object.keys(byTgt).forEach(t=>{ let o=0; byTgt[t].forEach(l=>{ l._ty=pos[t].y+o+l.current*SCALE/2; l._to=o; o+=l.current*SCALE; }); });
+
+  return pos;
+}
+function orderKey(i){
+  // keep a sensible vertical order: products top, process middle, loss/sink bottom
+  const k=NODES[i].kind;
+  const base={'product':0,'process':1,'sink':2}[k]||1;
+  return base*1000 + parseInt(NODES[i].code,10)/100;
+}
+
+// ---- RENDER --------------------------------------------------------
+const svg=document.getElementById('svg');
+const tip=document.getElementById('tip');
+let activeCat='ALL', activeStage=null;
+
+function ribbonPath(l,pos){
+  const a=pos[l.s], b=pos[l.t];
+  const x0=a.x+a.w, x1=b.x;
+  const w=Math.max(l.current*SCALE,2);
+  const y0=l._sy, y1=l._ty;
+  const cx=(x0+x1)/2;
+  const top=`M${x0},${y0-w/2} C${cx},${y0-w/2} ${cx},${y1-w/2} ${x1},${y1-w/2}`;
+  const bot=`L${x1},${y1+w/2} C${cx},${y1+w/2} ${cx},${y0+w/2} ${x0},${y0+w/2} Z`;
+  return top+bot;
+}
+
+function build(){
+  const pos=layout();
+  svg.innerHTML='';
+  const defs=el('defs');
+  // gradients per category
+  Object.keys(CAT_COLOR).forEach(c=>{
+    const g=el('linearGradient',{id:'g_'+c,x1:'0',x2:'1',y1:'0',y2:'0'});
+    g.appendChild(el('stop',{offset:'0%','stop-color':CAT_COLOR[c],'stop-opacity':'.85'}));
+    g.appendChild(el('stop',{offset:'100%','stop-color':CAT_COLOR[c],'stop-opacity':'1'}));
+    defs.appendChild(g);
+  });
+  svg.appendChild(defs);
+
+  // links layer
+  const gl=el('g'); svg.appendChild(gl);
+  LINKS.forEach(l=>{
+    const p=el('path',{d:ribbonPath(l,pos),fill:'url(#g_'+l.cat+')',class:'link'});
+    p.dataset.cat=l.cat; p.dataset.s=l.s; p.dataset.t=l.t;
+    p.addEventListener('mousemove',e=>showTip(e,linkTip(l)));
+    p.addEventListener('mouseleave',hideTip);
+    l._el=p; gl.appendChild(p);
+  });
+
+  // nodes layer
+  const gn=el('g'); svg.appendChild(gn);
+  Object.keys(NODES).forEach(id=>{
+    const n=NODES[id], p=pos[id];
+    const g=el('g',{class:'node'}); g.dataset.stage=n.stage; g.dataset.id=id;
+    // accent stripe (left)
+    const accCol = n.kind==='product'?CAT_COLOR.product : n.kind==='sink'?CAT_COLOR.final : CAT_COLOR.feed;
+    g.appendChild(el('rect',{x:p.x,y:p.y,width:p.w,height:p.h,rx:3,class:'node-rect'}));
+    g.appendChild(el('rect',{x:p.x,y:p.y,width:4,height:p.h,fill:accCol,class:'node-accent'}));
+    // header
+    g.appendChild(txt(p.x+16,p.y+22,n.name,'n-title'));
+    g.appendChild(txt(p.x+p.w-12,p.y+22,n.code,'n-code',{'text-anchor':'end'}));
+    // value
+    const cur=nodeThroughput(id), dz=nodeDesign(id);
+    const vy=Math.min(p.y+50, p.y+p.h-30);
+    g.appendChild(txt(p.x+16,vy, fmt(cur),'n-val mono'));
+    g.appendChild(txt(p.x+16+valW(cur),vy,'tph','n-unit'));
+    g.appendChild(txt(p.x+16,vy+18,'design '+fmt(dz),'n-sub'));
+    // gauge for product / sink nodes (current vs design utilisation)
+    if(n.kind!=='process'){
+      const gx=p.x+16, gy=p.y+p.h-14, gw=p.w-32;
+      g.appendChild(el('rect',{x:gx,y:gy,width:gw,height:7,rx:2,class:'gauge-bg'}));
+      const ratio=Math.max(0,Math.min(1.15,cur/dz));
+      const col=ratio>1.05?CAT_COLOR.product:ratio<0.9?'#ffb02e':accCol;
+      const gf=el('rect',{x:gx,y:gy,width:gw*Math.min(ratio,1),height:7,rx:2,fill:col,class:'gauge-fill'});
+      g.appendChild(gf); n._gauge={gf,gw,gx};
+    }
+    g.addEventListener('mousemove',e=>showTip(e,nodeTip(id)));
+    g.addEventListener('mouseleave',hideTip);
+    n._el=g; n._pos=p; gn.appendChild(g);
+  });
+
+  applyFilter();
+}
+
+function nodeThroughput(id){
+  const sin=LINKS.filter(l=>l.t===id).reduce((a,l)=>a+l.current,0);
+  const sout=LINKS.filter(l=>l.s===id).reduce((a,l)=>a+l.current,0);
+  return Math.max(sin,sout);
+}
+function nodeDesign(id){
+  const sin=LINKS.filter(l=>l.t===id).reduce((a,l)=>a+l.design,0);
+  const sout=LINKS.filter(l=>l.s===id).reduce((a,l)=>a+l.design,0);
+  return Math.max(sin,sout);
+}
+
+// ---- FILTER / HIGHLIGHT --------------------------------------------
+function applyFilter(){
+  LINKS.forEach(l=>{
+    let on=true;
+    if(activeCat!=='ALL') on = (l.cat===activeCat) || (activeCat==='loss'&&l.cat==='final');
+    if(activeStage) on = on && (NODES[l.s].stage===activeStage || NODES[l.t].stage===activeStage);
+    l._el.classList.toggle('hot', on && (activeCat!=='ALL'||activeStage));
+    l._el.classList.toggle('dim', !on);
+  });
+  Object.keys(NODES).forEach(id=>{
+    const n=NODES[id];
+    let on=true;
+    if(activeStage) on = (n.stage===activeStage);
+    n._el.classList.toggle('dim', activeStage? !on : false);
+  });
+}
+
+// ---- TOOLTIPS ------------------------------------------------------
+function linkTip(l){
+  const dev=((l.current-l.design)/l.design*100);
+  const st = Math.abs(dev)<3?'On target':dev>0?'Above design':'Below design';
+  return `<b>${NODES[l.s].name} → ${NODES[l.t].name}</b>
+    <div class="row"><span>${l.desc}</span></div>
+    <div class="row"><span>Current</span><span class="mono">${fmt(l.current)} tph</span></div>
+    <div class="row"><span>Design</span><span class="mono">${fmt(l.design)} tph</span></div>
+    <div class="row"><span>Deviation</span><span class="mono" style="color:${devCol(dev)}">${dev>0?'+':''}${dev.toFixed(1)}%</span></div>
+    <div class="row"><span>${CAT_LABEL[l.cat]}</span><span>${st}</span></div>
+    <div class="row"><span>Tag</span><span class="mono">${l.tag}</span></div>`;
+}
+function nodeTip(id){
+  const n=NODES[id], cur=nodeThroughput(id), dz=nodeDesign(id), dev=(cur-dz)/dz*100;
+  return `<b>${n.code} — ${n.name}</b>
+    <div class="row"><span>Throughput</span><span class="mono">${fmt(cur)} tph</span></div>
+    <div class="row"><span>Design</span><span class="mono">${fmt(dz)} tph</span></div>
+    <div class="row"><span>Deviation</span><span class="mono" style="color:${devCol(dev)}">${dev>0?'+':''}${dev.toFixed(1)}%</span></div>`;
+}
+function showTip(e,html){
+  tip.innerHTML=html; tip.style.opacity='1';
+  const r=document.getElementById('stage').getBoundingClientRect();
+  let x=e.clientX-r.left+14, y=e.clientY-r.top+14;
+  if(x+270>r.width) x=e.clientX-r.left-270;
+  tip.style.left=x+'px'; tip.style.top=y+'px';
+}
+function hideTip(){ tip.style.opacity='0'; }
+
+// ---- LIVE SIGNAL SIM ----------------------------------------------
+// Replace with real OPUS tag polling. Keeps chain mass-balanced-ish.
+function pollSignals(){
+  LINKS.forEach(l=>{
+    const d=l.design;
+    const noise=(Math.random()-0.5)*0.03*d;         // ±1.5% random step
+    l.current += noise + (d - l.current)*0.18;       // mean-revert to design
+    l.current = Math.max(d*0.86, Math.min(d*1.10, l.current));
+  });
+}
+
+function refresh(){
+  // recompute geometry (heights/offsets shift slightly) and redraw paths + values
+  const pos=layout();
+  LINKS.forEach(l=>{ l._el.setAttribute('d', ribbonPath(l,pos)); });
+  Object.keys(NODES).forEach(id=>{
+    const n=NODES[id];
+    const cur=nodeThroughput(id), dz=nodeDesign(id);
+    const vEl=n._el.querySelector('.n-val'); if(vEl) vEl.textContent=fmt(cur);
+    if(n._gauge){
+      const ratio=Math.max(0,Math.min(1.15,cur/dz));
+      n._gauge.gf.setAttribute('width', n._gauge.gw*Math.min(ratio,1));
+      n._gauge.gf.setAttribute('fill', ratio>1.05?CAT_COLOR.product:ratio<0.9?'#ffb02e':CAT_COLOR.feed);
+    }
+  });
+  updateKPIs();
+}
+
+function updateKPIs(){
+  const feed=LINKS.find(l=>l.s==='1000').current;
+  const prod=LINKS.filter(l=>l.cat==='product').reduce((a,l)=>a+l.current,0);
+  document.getElementById('kpi-feed').textContent=fmt(feed);
+  document.getElementById('kpi-rec').textContent=(prod/feed*100).toFixed(1);
+}
+
+// ---- HELPERS -------------------------------------------------------
+function el(t,a){const e=document.createElementNS(NS,t);if(a)for(const k in a)e.setAttribute(k,a[k]);return e;}
+function txt(x,y,s,cls,a){const e=el('text',Object.assign({x,y,class:cls},a||{}));e.textContent=s;return e;}
+function fmt(v){return Math.round(v).toLocaleString('en-US');}
+function valW(v){return fmt(v).length*12+8;}
+function devCol(d){return Math.abs(d)<3?'#27c46f':Math.abs(d)<8?'#ffb02e':'#ff5a5f';}
+
+// ---- UI WIRING -----------------------------------------------------
+document.querySelectorAll('.tab[data-cat]').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab[data-cat]').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active'); activeCat=t.dataset.cat; applyFilter();
+  });
+});
+// legend
+const lg=document.getElementById('legend');
+Object.keys(CAT_COLOR).forEach(c=>{
+  const d=document.createElement('div'); d.className='lg';
+  d.innerHTML=`<span class="sw" style="background:${CAT_COLOR[c]}"></span>${CAT_LABEL[c]}`;
+  lg.appendChild(d);
+});
+// bottom stage nav
+const sn=document.getElementById('stagenav');
+STAGES.forEach(s=>{
+  const b=document.createElement('div'); b.className='stage-btn'; b.dataset.stage=s.id;
+  b.innerHTML=`<span class="ic">${s.ic}</span><span class="lb">${s.lb}</span>`;
+  b.addEventListener('click',()=>{
+    const was=b.classList.contains('active');
+    document.querySelectorAll('.stage-btn').forEach(x=>x.classList.remove('active'));
+    if(was){ activeStage=null; } else { b.classList.add('active'); activeStage=s.id; }
+    applyFilter();
+  });
+  sn.appendChild(b);
+});
+document.getElementById('nav-menu').addEventListener('click',()=>{
+  activeCat='ALL'; activeStage=null;
+  document.querySelectorAll('.tab[data-cat]').forEach(x=>x.classList.toggle('active',x.dataset.cat==='ALL'));
+  document.querySelectorAll('.stage-btn').forEach(x=>x.classList.remove('active'));
+  applyFilter();
+});
+let muted=false;
+document.getElementById('mute').addEventListener('click',function(){muted=!muted;this.textContent=muted?'🔇':'🔊';});
+document.getElementById('ack').addEventListener('click',function(){this.style.color='#27c46f';setTimeout(()=>this.style.color='',600);});
+
+// clock
+function tick(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toLocaleTimeString('en-GB');
+  document.getElementById('date').textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+// ---- BOOT ----------------------------------------------------------
+build(); tick(); updateKPIs();
+setInterval(tick,1000);
+setInterval(()=>{ pollSignals(); refresh(); }, 2000);
+window.addEventListener('resize',()=>{});  // viewBox handles scaling
+</script>
+</body>
+</html>
